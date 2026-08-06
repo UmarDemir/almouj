@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Almouj Valuation Model — MLR Pricing Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0F262F;
+    --navy-2:#153640;
+    --paper:#F6F1E4;
+    --paper-2:#EFE7D3;
+    --teal:#1F6E71;
+    --teal-light:#2E8C8F;
+    --brass:#B8834C;
+    --brass-light:#D4A876;
+    --ink:#16232A;
+    --ink-soft:#4B5B60;
+    --line: rgba(16,38,47,0.14);
+    --line-light: rgba(246,241,228,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .display{font-family:'Fraunces', serif;}
+
+  a{color:inherit;}
+
+  /* ===== Top bar ===== */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 5vw;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);}
+  .topbar .meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; color:var(--ink-soft); letter-spacing:0.04em;
+    text-align:right;
+  }
+
+  /* ===== Hero header ===== */
+  .hero-head{
+    padding:64px 5vw 40px;
+    max-width:900px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--teal); margin-bottom:18px; display:block;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:clamp(32px, 5vw, 54px);
+    line-height:1.08;
+    margin:0 0 20px;
+    color:var(--navy);
+  }
+  h1 em{font-style:italic; font-weight:300; color:var(--teal);}
+  .hero-sub{
+    font-size:16px; line-height:1.6; color:var(--ink-soft);
+    max-width:620px;
+  }
+
+  /* ===== Main grid ===== */
+  .grid{
+    display:grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap:0;
+    margin:0 5vw 0;
+    border:1px solid var(--line);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  @media (max-width: 860px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  /* ===== Form panel ===== */
+  .form-panel{
+    background:var(--paper);
+    padding:40px 44px;
+    border-right:1px solid var(--line);
+  }
+  @media (max-width: 860px){ .form-panel{border-right:none; border-bottom:1px solid var(--line);} }
+
+  .panel-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--ink-soft); margin-bottom:28px; display:block;
+  }
+
+  .field{ margin-bottom:26px; }
+  .field label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:13px; font-weight:600; color:var(--navy);
+    margin-bottom:10px;
+  }
+  .field label .val{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:400; color:var(--teal); font-size:13px;
+  }
+  input[type="range"]{
+    -webkit-appearance:none; width:100%; height:2px;
+    background:var(--line); outline:none; border-radius:2px;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+    background:var(--teal); cursor:pointer; border:3px solid var(--paper); box-shadow:0 0 0 1px var(--teal);
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:16px; height:16px; border-radius:50%;
+    background:var(--teal); cursor:pointer; border:3px solid var(--paper); box-shadow:0 0 0 1px var(--teal);
+  }
+
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+
+  select, .stepper{
+    width:100%;
+    font-family:'Work Sans', sans-serif;
+    font-size:14px;
+    padding:11px 12px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:3px;
+    color:var(--ink);
+  }
+  select{ appearance:none; cursor:pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0L5 6L10 0Z' fill='%234B5B60'/></svg>");
+    background-repeat:no-repeat; background-position:right 12px center;
+  }
+
+  .stepper{ display:flex; align-items:center; justify-content:space-between; padding:6px 10px; }
+  .stepper button{
+    width:26px; height:26px; border-radius:50%; border:1px solid var(--line);
+    background:var(--paper); color:var(--navy); font-size:15px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stepper button:hover{ background:var(--teal); color:#fff; border-color:var(--teal); }
+  .stepper .n{ font-family:'IBM Plex Mono', monospace; font-size:15px; }
+
+  .note{
+    font-size:12px; color:var(--ink-soft); line-height:1.6;
+    padding-top:6px; border-top:1px dashed var(--line); margin-top:8px;
+  }
+
+  /* ===== Valuation panel ===== */
+  .val-panel{
+    background:var(--navy);
+    color:var(--paper);
+    padding:44px 44px 36px;
+    position:relative;
+    display:flex; flex-direction:column;
+    justify-content:space-between;
+  }
+  .val-panel .panel-label{ color:rgba(246,241,228,0.55); }
+
+  .seal{
+    position:absolute; top:36px; right:40px;
+    width:74px; height:74px; border-radius:50%;
+    border:1.5px solid var(--brass-light);
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--brass-light);
+  }
+  .seal::before{
+    content:""; position:absolute; inset:6px; border-radius:50%;
+    border:1px dashed rgba(212,168,118,0.5);
+  }
+  .seal .r2{ font-size:15px; font-weight:600; }
+  .seal .r2label{ font-size:8px; letter-spacing:0.1em; margin-top:2px; }
+
+  .price-block{ margin-top:18px; }
+  .price-caption{
+    font-family:'IBM Plex Mono', monospace; font-size:11px;
+    letter-spacing:0.1em; text-transform:uppercase; color:rgba(246,241,228,0.55);
+    margin-bottom:10px;
+  }
+  .price{
+    font-family:'Fraunces', serif; font-weight:500;
+    font-size:clamp(38px, 4.4vw, 56px);
+    color:var(--brass-light);
+    line-height:1;
+    letter-spacing:-0.01em;
+  }
+  .price .ccy{ font-size:0.4em; font-family:'IBM Plex Mono',monospace; color:rgba(246,241,228,0.6); margin-left:8px; }
+  .range{
+    font-family:'IBM Plex Mono', monospace; font-size:13px;
+    color:rgba(246,241,228,0.65); margin-top:12px;
+  }
+  .psqm{
+    margin-top:6px; font-family:'IBM Plex Mono', monospace; font-size:12px;
+    color:rgba(246,241,228,0.45);
+  }
+
+  .drivers{ margin-top:30px; }
+  .drivers .panel-label{ margin-bottom:14px; }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px;
+    padding:6px 10px; border-radius:20px;
+    border:1px solid rgba(246,241,228,0.22);
+    color:rgba(246,241,228,0.85);
+  }
+  .chip.pos{ border-color: rgba(46,140,143,0.7); color:#8FD4D6; }
+  .chip.neg{ border-color: rgba(184,131,76,0.55); color:var(--brass-light); }
+
+  .val-footer{
+    margin-top:32px; padding-top:18px; border-top:1px solid var(--line-light);
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:rgba(246,241,228,0.45);
+    line-height:1.6;
+  }
+
+  /* ===== Methodology strip ===== */
+  .methodology{
+    margin:64px 5vw 0; padding:44px 0 0;
+    border-top:1px solid var(--line);
+    display:grid; grid-template-columns:repeat(3,1fr); gap:36px;
+  }
+  @media (max-width: 860px){ .methodology{grid-template-columns:1fr;} }
+  .m-card .eyebrow{ margin-bottom:12px; }
+  .m-card h3{
+    font-family:'Fraunces', serif; font-weight:500; font-size:20px;
+    color:var(--navy); margin:0 0 10px;
+  }
+  .m-card p{ font-size:13.5px; line-height:1.65; color:var(--ink-soft); margin:0; }
+  .m-card .stat{
+    font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--teal);
+    margin-top:10px; display:block;
+  }
+
+  /* ===== Footer ===== */
+  footer{
+    margin-top:70px; padding:28px 5vw 50px;
+    border-top:1px solid var(--line);
+  }
+  footer p{
+    font-family:'IBM Plex Mono', monospace; font-size:11px;
+    color:var(--ink-soft); line-height:1.8; max-width:760px;
+    margin:0;
+  }
+  footer .fmark{ color:var(--teal); }
+
+  @media (prefers-reduced-motion: no-preference){
+    .price{ transition: opacity 0.2s ease; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> ALMOUJ PRICING MODEL</div>
+    <div class="meta">Muscat, Oman &nbsp;·&nbsp; The Wave community<br>Hedonic MLR, n = 50</div>
+  </div>
+
+  <div class="hero-head">
+    <span class="eyebrow">Independent research · not affiliated with any developer or agency</span>
+    <h1>What's an apartment<br>in <em>The Wave</em> actually worth?</h1>
+    <p class="hero-sub">A hedonic pricing model built on 50 verified Almouj listings, validated against
+    10 held-out properties. Adjust the specifications below — the estimate updates from a
+    multiple linear regression fit on log-transformed price.</p>
+  </div>
+
+  <div class="grid">
+    <!-- FORM -->
+    <div class="form-panel">
+      <span class="panel-label">Property specification</span>
+
+      <div class="field">
+        <label>Surface area <span class="val mono" id="sqmVal">140 m²</span></label>
+        <input type="range" id="sqm" min="76" max="245" value="140" step="1">
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Bedrooms</label>
+          <div class="stepper">
+            <button type="button" data-step="bed" data-dir="-1">−</button>
+            <span class="n mono" id="bedVal">2</span>
+            <button type="button" data-step="bed" data-dir="1">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Bathrooms</label>
+          <div class="stepper">
+            <button type="button" data-step="bath" data-dir="-1">−</button>
+            <span class="n mono" id="bathVal">2</span>
+            <button type="button" data-step="bath" data-dir="1">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Balconies</label>
+          <div class="stepper">
+            <button type="button" data-step="bal" data-dir="-1">−</button>
+            <span class="n mono" id="balVal">1</span>
+            <button type="button" data-step="bal" data-dir="1">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Floor number</label>
+          <div class="stepper">
+            <button type="button" data-step="floor" data-dir="-1">−</button>
+            <span class="n mono" id="floorVal">3</span>
+            <button type="button" data-step="floor" data-dir="1">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Location</label>
+        <select id="location">
+          <option value="Almeria North">Almeria North</option>
+          <option value="Almeria South">Almeria South</option>
+          <option value="Juman 1">Juman 1</option>
+          <option value="Lagoon Residence">Lagoon Residence</option>
+          <option value="Marsa 1">Marsa 1</option>
+          <option value="Marsa 2">Marsa 2</option>
+          <option value="Marsa 3" selected>Marsa 3</option>
+          <option value="Marsa Gardens">Marsa Gardens</option>
+          <option value="Siraj">Siraj</option>
+          <option value="The Gardens">The Gardens</option>
+        </select>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>View</label>
+          <select id="view">
+            <option value="Other">Other</option>
+            <option value="Lagoon">Lagoon</option>
+            <option value="Marina" selected>Marina</option>
+            <option value="Sea">Sea</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Furnishing</label>
+          <select id="furnish">
+            <option value="Furnished">Furnished</option>
+            <option value="Semi-furnished">Semi-furnished</option>
+            <option value="Unfurnished" selected>Unfurnished</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="note">
+        Model trained on data from Wave Homes and Dubizzle listings, September 2025.
+        Floor number, balconies, and exact sub-location were not statistically significant
+        predictors in the fitted model (p &gt; 0.05) — they're included here for completeness,
+        not because the model weighs them heavily.
+      </div>
+    </div>
+
+    <!-- VALUATION -->
+    <div class="val-panel">
+      <div>
+        <div class="seal">
+          <span class="r2 mono">.90</span>
+          <span class="r2label">R² TEST</span>
+        </div>
+        <span class="panel-label">Estimated valuation</span>
+        <div class="price-block">
+          <div class="price-caption">Predicted price</div>
+          <div class="price"><span id="priceOut">—</span><span class="ccy">OMR</span></div>
+          <div class="range" id="rangeOut">± 15,800 OMR estimated error</div>
+          <div class="psqm" id="psqmOut">— OMR / m²</div>
+        </div>
+
+        <div class="drivers">
+          <span class="panel-label">What's driving this number</span>
+          <div class="chip-row" id="chips"></div>
+        </div>
+      </div>
+
+      <div class="val-footer">
+        Prediction = exp(11.2307 + 0.0012·sqm + 0.2110·bed + 0.0320·bath − 0.0377·balcony
+        + 0.0125·floor + location + view + furnishing). Coefficients fit by OLS on
+        log-transformed price, n = 40 training rows, tested on 10 held-out listings.
+      </div>
+    </div>
+  </div>
+
+  <div class="methodology">
+    <div class="m-card">
+      <span class="eyebrow">Sample</span>
+      <h3>50 verified listings</h3>
+      <p>Sourced from Wave Homes and Dubizzle in September 2025. Prices ranged 90,000–300,000
+      OMR with a right-skewed distribution, corrected with a log transform before fitting.</p>
+      <span class="stat">Mean price/m²: 1,175.8 OMR</span>
+    </div>
+    <div class="m-card">
+      <span class="eyebrow">Model</span>
+      <h3>Multiple linear regression</h3>
+      <p>Parking spaces were dropped for severe multicollinearity (VIF &gt; 100). Marina view
+      and surface area were the strongest correlates of price (r = 0.83 and r = 0.79).</p>
+      <span class="stat">F-statistic 35.29, p &lt; 0.001</span>
+    </div>
+    <div class="m-card">
+      <span class="eyebrow">Validation</span>
+      <h3>Tested out-of-sample</h3>
+      <p>A separate 10-apartment set, unseen during training, was used to test real-world
+      accuracy. MLR generalized better here than a principal component regression alternative.</p>
+      <span class="stat">Mean absolute error: 10,902 OMR</span>
+    </div>
+  </div>
+
+  <footer>
+    <p><span class="fmark">△</span> This tool estimates asking-price levels from a small (n=50) sample of
+    one community and should not be treated as a formal appraisal — see the accompanying IA for full
+    limitations, including source bias toward asking (not sale) prices and reduced accuracy at the
+    extremes of the size range. Built with Python (pandas, statsmodels, scikit-learn) and deployed
+    as a static client-side calculator.</p>
+  </footer>
+
+<script>
+  // ---- Coefficients (Appendix B.2, final MLR model) ----
+  const COEF = {
+    const: 11.2307,
+    sqm: 0.0012,
+    bed: 0.2110,
+    bath: 0.0320,
+    bal: -0.0377,
+    floor: 0.0125,
+    location: {
+      "Almeria North": 0,
+      "Almeria South": -0.0185,
+      "Juman 1": 0.0292,
+      "Lagoon Residence": -0.0803,
+      "Marsa 1": -0.0295,
+      "Marsa 2": 0.0189,
+      "Marsa 3": 0.0722,
+      "Marsa Gardens": 0.0139,
+      "Siraj": -0.0911,
+      "The Gardens": -0.0615
+    },
+    view: { "Other": 0, "Lagoon": 0.1489, "Marina": 0.3753, "Sea": 0.1238 },
+    furnish: { "Furnished": 0, "Semi-furnished": -0.1363, "Unfurnished": -0.0429 }
+  };
+  const RMSE_OMR = 15800; // Table 7, final feature set, MLR
+
+  const state = { sqm: 140, bed: 2, bath: 2, bal: 1, floor: 3 };
+  const bounds = {
+    bed: [1, 3], bath: [1, 3], bal: [0, 4], floor: [0, 5]
+  };
+
+  const $ = id => document.getElementById(id);
+
+  function pctEffect(beta){ return (Math.exp(beta) - 1) * 100; }
+
+  function computeChips(loc, view, furn){
+    const items = [];
+    const push = (label, beta) => {
+      if (Math.abs(beta) < 0.0001) return;
+      const pct = pctEffect(beta);
+      items.push({ label: `${label} ${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`, positive: pct >= 0 });
+    };
+    push(`View: ${view}`, COEF.view[view]);
+    push(`${loc}`, COEF.location[loc]);
+    push(`${furn}`, COEF.furnish[furn]);
+    return items;
+  }
+
+  function render(){
+    const loc = $("location").value;
+    const view = $("view").value;
+    const furn = $("furnish").value;
+
+    const lnPrice = COEF.const
+      + COEF.sqm * state.sqm
+      + COEF.bed * state.bed
+      + COEF.bath * state.bath
+      + COEF.bal * state.bal
+      + COEF.floor * state.floor
+      + COEF.location[loc]
+      + COEF.view[view]
+      + COEF.furnish[furn];
+
+    const price = Math.exp(lnPrice);
+    const priceRounded = Math.round(price / 100) * 100;
+    const low = Math.round((price - RMSE_OMR) / 100) * 100;
+    const high = Math.round((price + RMSE_OMR) / 100) * 100;
+    const psqm = Math.round(price / state.sqm);
+
+    $("priceOut").textContent = priceRounded.toLocaleString("en-US");
+    $("rangeOut").textContent = `${low.toLocaleString("en-US")} – ${high.toLocaleString("en-US")} OMR likely range`;
+    $("psqmOut").textContent = `${psqm.toLocaleString("en-US")} OMR / m²`;
+
+    $("sqmVal").textContent = `${state.sqm} m²`;
+    $("bedVal").textContent = state.bed;
+    $("bathVal").textContent = state.bath;
+    $("balVal").textContent = state.bal;
+    $("floorVal").textContent = state.floor;
+
+    const chipRow = $("chips");
+    chipRow.innerHTML = "";
+    computeChips(loc, view, furn).forEach(c => {
+      const el = document.createElement("span");
+      el.className = "chip " + (c.positive ? "pos" : "neg");
+      el.textContent = c.label;
+      chipRow.appendChild(el);
+    });
+  }
+
+  $("sqm").addEventListener("input", e => { state.sqm = parseInt(e.target.value, 10); render(); });
+  document.querySelectorAll(".stepper button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.step;
+      const dir = parseInt(btn.dataset.dir, 10);
+      const [min, max] = bounds[key];
+      state[key] = Math.min(max, Math.max(min, state[key] + dir));
+      render();
+    });
+  });
+  ["location","view","furnish"].forEach(id => $(id).addEventListener("change", render));
+
+  render();
+</script>
+
+</body>
+</html>
