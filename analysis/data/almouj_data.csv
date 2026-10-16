@@ -1,0 +1,51 @@
+Log_Price,Location,View,Surface Area (sqm),Bedrooms,Bathrooms,Balconies,Floor Number,Parking Spaces,Furnishing Status
+11.82041016,The Gardens,Other,130,2,2,1,5,1,Unfurnished
+11.77528973,Lagoon Residence,Lagoon,125,2,2,2,2,1,Semi-furnished
+12.61153775,Almeria North,Marina,200,3,3,2,4,1,Furnished
+12.46843691,Marsa 1,Marina,245,3,3,1,5,1,Semi-furnished
+12.4292162,Marsa 3,Marina,191.9,2,2,1,3,1,Unfurnished
+12.4292162,Almeria North,Marina,165,3,3,2,0,1,Unfurnished
+12.34583459,Juman 1,Marina,157,2,2,1,5,1,Unfurnished
+12.34583459,Marsa 2,Marina,169,2,3,1,0,2,Unfurnished
+12.34583459,Almeria North,Marina,192,3,3,2,1,2,Unfurnished
+12.30138283,Juman 1,Marina,153.35,2,3,1,4,1,Furnished
+12.30138283,Marsa 2,Marina,119,2,3,1,0,1,Furnished
+12.30138283,Marsa 3,Marina,153,2,2,1,2,2,Unfurnished
+12.20607265,Marsa 1,Marina,127,2,2,1,4,1,Unfurnished
+12.20607265,Almeria North,Marina,139.3,2,2,1,4,1,Unfurnished
+12.18075484,Almeria South,Other,190,3,3,1,2.5,1,Furnished
+12.15477935,Marsa 2,Marina,135,2,2,1,2,1,Unfurnished
+12.14419724,Marsa 2,Marina,138,2,2,1,2,2,Unfurnished
+12.1281111,Almeria South,Other,207,3,3,1,2.5,1,Unfurnished
+12.04355372,Marsa Gardens,Sea,145,2,2,1,3,1,Unfurnished
+12.01370075,Marsa Gardens,Marina,152,2,2,1,3,1,Furnished
+11.9511804,Marsa Gardens,Lagoon,125,2,2,2,3,1,Unfurnished
+11.9511804,The Gardens,Sea,141,2,2,1,5,2,Furnished
+11.91839057,Marsa 1,Other,145,2,2,1,5,1,Unfurnished
+11.91839057,Marsa 2,Other,153,2,2,1,0,1,Furnished
+11.91839057,Marsa 3,Other,153,2,2,1,5,1,Furnished
+11.91839057,Marsa Gardens,Sea,133,2,2,1,5,1,Unfurnished
+11.88448902,Marsa 3,Other,145,2,2,1,5,1,Unfurnished
+11.86358234,Marsa Gardens,Other,132,2,2,1,2,1,Unfurnished
+11.83500896,Almeria North,Other,139,2,2,1,0,1,Unfurnished
+11.81303006,Marsa 1,Other,190,2,2,0,0,1,Unfurnished
+11.73606902,Almeria South,Other,139.4,2,2,2,0,1,Unfurnished
+11.71177632,Siraj,Other,120,2,1,1,2,2,Unfurnished
+11.69524702,Siraj,Other,115,2,2,1,2,1,Unfurnished
+11.69524702,Siraj,Other,115,2,2,1,3,1,Unfurnished
+11.69524702,Marsa 3,Other,130,1,2,1,3,1,Unfurnished
+11.62625415,Almeria South,Other,91,1,2,1,3,1,Unfurnished
+11.61728548,Marsa 1,Sea,76,1,1,1,1,1,Unfurnished
+11.61728548,Almeria South,Other,96,1,2,1,3,1,Unfurnished
+11.60823564,Marsa 1,Sea,83,1,1,1,3,1,Unfurnished
+11.56171563,Marsa Gardens,Other,107,1,1,1,0,1,Unfurnished
+11.56171563,Marsa 2,Other,92,1,1,1,1,1,Furnished
+11.49781183,Marsa Gardens,Other,81,1,1,1,3,1,Unfurnished
+11.40756495,Almeria South,Other,96.26,1,2,1,2,1,Unfurnished
+12.3883942,Marsa 1,Marina,195,3,3,4,4,2,Unfurnished
+11.91839057,Lagoon Residence,Lagoon,125,2,2,2,3,1,Furnished
+11.46163217,Lagoon Residence,Other,107,1,1,2,1,1,Furnished
+11.8277362,Lagoon Residence,Lagoon,126,2,2,2,4,1,Unfurnished
+11.98292909,Marsa Gardens,Sea,145,2,3,1,3,2,Unfurnished
+12.4874851,Marsa 2,Marina,181,3,3,1,3,1,Unfurnished
+11.81303006,Almeria North,Other,130,2,2,2,3,1,Unfurnished

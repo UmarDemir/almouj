@@ -481,9 +481,10 @@
           <div class="row"><dt>Method</dt><dd>Multiple linear regression</dd></div>
           <div class="row"><dt>Training rows</dt><dd class="num">40</dd></div>
           <div class="row"><dt>F-statistic</dt><dd class="num">35.29 (p &lt; 0.001)</dd></div>
-          <div class="row"><dt>Removed</dt><dd>Parking spaces</dd></div>
+          <div class="row"><dt>Excluded</dt><dd>Parking spaces</dd></div>
+          <div class="row"><dt>Code and data</dt><dd><a href="https://github.com/UmarDemir/almouj/tree/main/analysis">On GitHub</a></dd></div>
         </dl>
-        <p class="foot">Parking spaces were dropped to reduce multicollinearity. Surface area and bedrooms had VIF above 100 before feature selection.</p>
+        <p class="foot">Parking spaces were excluded from the final model. Surface area and bedrooms overlap strongly (VIF 8.1 and 9.5), which is why their separate effects are hard to tell apart.</p>
       </div>
 
       <div class="group">
