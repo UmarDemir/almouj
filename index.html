@@ -2,433 +2,595 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Almouj Valuation Model — MLR Pricing Tool</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Almouj Valuation Model</title>
+<meta name="description" content="A hedonic pricing model for apartments in Almouj (The Wave), Muscat. Multiple linear regression on 50 public listings, tested on unseen listings. Built by Umar Demir." />
+<meta name="author" content="Umar Demir" />
+<meta name="color-scheme" content="light dark" />
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Almouj Valuation Model" />
+<meta property="og:description" content="What's an apartment in The Wave actually worth? A hedonic pricing model of Almouj apartments, Muscat. Built by Umar Demir." />
+<meta property="og:url" content="https://omardurbi.github.io/almouj-valuation-model/" />
+<meta name="twitter:card" content="summary" />
 <style>
+  /* ============================================================
+     Design tokens: Apple HIG type scale, system colors, 8pt grid
+     ============================================================ */
   :root{
-    --navy:#0F262F;
-    --navy-2:#153640;
-    --paper:#F6F1E4;
-    --paper-2:#EFE7D3;
-    --teal:#1F6E71;
-    --teal-light:#2E8C8F;
-    --brass:#B8834C;
-    --brass-light:#D4A876;
-    --ink:#16232A;
-    --ink-soft:#4B5B60;
-    --line: rgba(16,38,47,0.14);
-    --line-light: rgba(246,241,228,0.18);
+    --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, monospace;
+
+    --text-caption1: 12px;
+    --text-footnote: 13px;
+    --text-subhead: 15px;
+    --text-body: 17px;
+    --text-title3: 20px;
+    --text-title2: 22px;
+    --text-title1: 28px;
+    --text-large-title: 34px;
+
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+    --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
+
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px; --radius-full: 9999px;
+
+    --ease-out: cubic-bezier(0, 0, 0.58, 1);
+    --ease-default: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --duration-instant: 100ms; --duration-fast: 200ms;
+
+    /* Light mode. Secondary label and accent text are darkened from the
+       raw system values so small text meets WCAG AA (4.5:1). */
+    --label-primary: #000000;
+    --label-secondary: #6E6E73;
+    --label-tertiary: #8E8E93;
+    --bg-primary: #F2F2F7;      /* grouped background */
+    --bg-card: #FFFFFF;
+    --bg-fill: #F2F2F7;         /* inputs, segmented track */
+    --bg-fill-strong: #E5E5EA;
+    --separator: rgba(60, 60, 67, 0.29);
+    --accent: #007AFF;          /* controls, large text */
+    --accent-text: #0066CC;     /* small accent text */
+    --accent-soft: rgba(0, 122, 255, 0.10);
+    --focus-ring: rgba(0, 122, 255, 0.35);
+    --positive: #1E7E34;
+    --positive-soft: rgba(52, 199, 89, 0.14);
+    --negative: #B25000;
+    --negative-soft: rgba(255, 149, 0, 0.14);
+    --segment-selected: #FFFFFF;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-segment: 0 1px 3px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.04);
   }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  @media (prefers-color-scheme: dark){
+    :root{
+      --label-primary: #FFFFFF;
+      --label-secondary: #98989F;
+      --label-tertiary: #8E8E93;
+      --bg-primary: #000000;
+      --bg-card: #1C1C1E;
+      --bg-fill: #2C2C2E;
+      --bg-fill-strong: #3A3A3C;
+      --separator: rgba(84, 84, 88, 0.6);
+      --accent: #0A84FF;
+      --accent-text: #409CFF;
+      --accent-soft: rgba(10, 132, 255, 0.18);
+      --focus-ring: rgba(10, 132, 255, 0.5);
+      --positive: #30D158;
+      --positive-soft: rgba(48, 209, 88, 0.16);
+      --negative: #FF9F0A;
+      --negative-soft: rgba(255, 159, 10, 0.16);
+      --segment-selected: #636366;
+      --shadow-card: none;
+      --shadow-segment: 0 1px 3px rgba(0,0,0,0.3);
+    }
+  }
+
+  /* ============================================================
+     Base
+     ============================================================ */
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
   body{
-    background:var(--paper);
-    color:var(--ink);
-    font-family:'Work Sans', sans-serif;
+    margin:0;
+    background:var(--bg-primary);
+    color:var(--label-primary);
+    font-family:var(--font-system);
+    font-size:var(--text-body);
+    line-height:1.47;
     -webkit-font-smoothing:antialiased;
   }
-  .mono{font-family:'IBM Plex Mono', monospace;}
-  .display{font-family:'Fraunces', serif;}
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:0 max(var(--space-4), env(safe-area-inset-left)) 0 max(var(--space-4), env(safe-area-inset-right));
+  }
+  @media (min-width: 768px){ .wrap{ padding:0 var(--space-8); } }
 
-  a{color:inherit;}
+  .visually-hidden{
+    position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  .num{ font-variant-numeric: tabular-nums; }
 
-  /* ===== Top bar ===== */
-  .topbar{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:22px 5vw;
-    border-bottom:1px solid var(--line);
-  }
-  .brand{
-    display:flex; align-items:center; gap:10px;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:12px; letter-spacing:0.14em; text-transform:uppercase;
-    color:var(--ink-soft);
-  }
-  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);}
-  .topbar .meta{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11px; color:var(--ink-soft); letter-spacing:0.04em;
-    text-align:right;
-  }
-
-  /* ===== Hero header ===== */
-  .hero-head{
-    padding:64px 5vw 40px;
-    max-width:900px;
-  }
+  /* ============================================================
+     Header
+     ============================================================ */
+  header{ padding:var(--space-10) 0 var(--space-8); }
+  @media (min-width: 768px){ header{ padding:var(--space-12) 0 var(--space-10); } }
   .eyebrow{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:12px; letter-spacing:0.16em; text-transform:uppercase;
-    color:var(--teal); margin-bottom:18px; display:block;
+    display:block;
+    font-size:var(--text-footnote);
+    font-weight:600;
+    letter-spacing:0.02em;
+    color:var(--accent-text);
+    margin:0 0 var(--space-2);
   }
   h1{
-    font-family:'Fraunces', serif;
-    font-weight:500;
-    font-size:clamp(32px, 5vw, 54px);
-    line-height:1.08;
-    margin:0 0 20px;
-    color:var(--navy);
+    font-family:var(--font-display);
+    font-size:var(--text-large-title);
+    line-height:1.12;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 var(--space-3);
   }
-  h1 em{font-style:italic; font-weight:300; color:var(--teal);}
-  .hero-sub{
-    font-size:16px; line-height:1.6; color:var(--ink-soft);
-    max-width:620px;
-  }
-
-  /* ===== Main grid ===== */
-  .grid{
-    display:grid;
-    grid-template-columns: 1.15fr 1fr;
-    gap:0;
-    margin:0 5vw 0;
-    border:1px solid var(--line);
-    border-radius:2px;
-    overflow:hidden;
-  }
-  @media (max-width: 860px){
-    .grid{grid-template-columns:1fr;}
-  }
-
-  /* ===== Form panel ===== */
-  .form-panel{
-    background:var(--paper);
-    padding:40px 44px;
-    border-right:1px solid var(--line);
-  }
-  @media (max-width: 860px){ .form-panel{border-right:none; border-bottom:1px solid var(--line);} }
-
-  .panel-label{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
-    color:var(--ink-soft); margin-bottom:28px; display:block;
-  }
-
-  .field{ margin-bottom:26px; }
-  .field label{
-    display:flex; justify-content:space-between; align-items:baseline;
-    font-size:13px; font-weight:600; color:var(--navy);
-    margin-bottom:10px;
-  }
-  .field label .val{
-    font-family:'IBM Plex Mono', monospace;
-    font-weight:400; color:var(--teal); font-size:13px;
-  }
-  input[type="range"]{
-    -webkit-appearance:none; width:100%; height:2px;
-    background:var(--line); outline:none; border-radius:2px;
-  }
-  input[type="range"]::-webkit-slider-thumb{
-    -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
-    background:var(--teal); cursor:pointer; border:3px solid var(--paper); box-shadow:0 0 0 1px var(--teal);
-  }
-  input[type="range"]::-moz-range-thumb{
-    width:16px; height:16px; border-radius:50%;
-    background:var(--teal); cursor:pointer; border:3px solid var(--paper); box-shadow:0 0 0 1px var(--teal);
-  }
-
-  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-
-  select, .stepper{
-    width:100%;
-    font-family:'Work Sans', sans-serif;
-    font-size:14px;
-    padding:11px 12px;
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:3px;
-    color:var(--ink);
-  }
-  select{ appearance:none; cursor:pointer;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0L5 6L10 0Z' fill='%234B5B60'/></svg>");
-    background-repeat:no-repeat; background-position:right 12px center;
-  }
-
-  .stepper{ display:flex; align-items:center; justify-content:space-between; padding:6px 10px; }
-  .stepper button{
-    width:26px; height:26px; border-radius:50%; border:1px solid var(--line);
-    background:var(--paper); color:var(--navy); font-size:15px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .stepper button:hover{ background:var(--teal); color:#fff; border-color:var(--teal); }
-  .stepper .n{ font-family:'IBM Plex Mono', monospace; font-size:15px; }
-
-  .note{
-    font-size:12px; color:var(--ink-soft); line-height:1.6;
-    padding-top:6px; border-top:1px dashed var(--line); margin-top:8px;
-  }
-
-  /* ===== Valuation panel ===== */
-  .val-panel{
-    background:var(--navy);
-    color:var(--paper);
-    padding:44px 44px 36px;
-    position:relative;
-    display:flex; flex-direction:column;
-    justify-content:space-between;
-  }
-  .val-panel .panel-label{ color:rgba(246,241,228,0.55); }
-
-  .seal{
-    position:absolute; top:36px; right:40px;
-    width:74px; height:74px; border-radius:50%;
-    border:1.5px solid var(--brass-light);
-    display:flex; align-items:center; justify-content:center;
-    flex-direction:column;
-    font-family:'IBM Plex Mono', monospace;
-    color:var(--brass-light);
-  }
-  .seal::before{
-    content:""; position:absolute; inset:6px; border-radius:50%;
-    border:1px dashed rgba(212,168,118,0.5);
-  }
-  .seal .r2{ font-size:15px; font-weight:600; }
-  .seal .r2label{ font-size:8px; letter-spacing:0.1em; margin-top:2px; }
-
-  .price-block{ margin-top:18px; }
-  .price-caption{
-    font-family:'IBM Plex Mono', monospace; font-size:11px;
-    letter-spacing:0.1em; text-transform:uppercase; color:rgba(246,241,228,0.55);
-    margin-bottom:10px;
-  }
-  .price{
-    font-family:'Fraunces', serif; font-weight:500;
-    font-size:clamp(38px, 4.4vw, 56px);
-    color:var(--brass-light);
-    line-height:1;
-    letter-spacing:-0.01em;
-  }
-  .price .ccy{ font-size:0.4em; font-family:'IBM Plex Mono',monospace; color:rgba(246,241,228,0.6); margin-left:8px; }
-  .range{
-    font-family:'IBM Plex Mono', monospace; font-size:13px;
-    color:rgba(246,241,228,0.65); margin-top:12px;
-  }
-  .psqm{
-    margin-top:6px; font-family:'IBM Plex Mono', monospace; font-size:12px;
-    color:rgba(246,241,228,0.45);
-  }
-
-  .drivers{ margin-top:30px; }
-  .drivers .panel-label{ margin-bottom:14px; }
-  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
-  .chip{
-    font-family:'IBM Plex Mono', monospace; font-size:11.5px;
-    padding:6px 10px; border-radius:20px;
-    border:1px solid rgba(246,241,228,0.22);
-    color:rgba(246,241,228,0.85);
-  }
-  .chip.pos{ border-color: rgba(46,140,143,0.7); color:#8FD4D6; }
-  .chip.neg{ border-color: rgba(184,131,76,0.55); color:var(--brass-light); }
-
-  .val-footer{
-    margin-top:32px; padding-top:18px; border-top:1px solid var(--line-light);
-    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:rgba(246,241,228,0.45);
-    line-height:1.6;
-  }
-
-  /* ===== Methodology strip ===== */
-  .methodology{
-    margin:64px 5vw 0; padding:44px 0 0;
-    border-top:1px solid var(--line);
-    display:grid; grid-template-columns:repeat(3,1fr); gap:36px;
-  }
-  @media (max-width: 860px){ .methodology{grid-template-columns:1fr;} }
-  .m-card .eyebrow{ margin-bottom:12px; }
-  .m-card h3{
-    font-family:'Fraunces', serif; font-weight:500; font-size:20px;
-    color:var(--navy); margin:0 0 10px;
-  }
-  .m-card p{ font-size:13.5px; line-height:1.65; color:var(--ink-soft); margin:0; }
-  .m-card .stat{
-    font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--teal);
-    margin-top:10px; display:block;
-  }
-
-  /* ===== Footer ===== */
-  footer{
-    margin-top:70px; padding:28px 5vw 50px;
-    border-top:1px solid var(--line);
-  }
-  footer p{
-    font-family:'IBM Plex Mono', monospace; font-size:11px;
-    color:var(--ink-soft); line-height:1.8; max-width:760px;
+  @media (min-width: 768px){ h1{ font-size:48px; } }
+  .lede{
+    font-size:var(--text-body);
+    color:var(--label-secondary);
+    max-width:640px;
     margin:0;
   }
-  footer .fmark{ color:var(--teal); }
+  .meta-line{
+    margin-top:var(--space-4);
+    font-size:var(--text-footnote);
+    color:var(--label-secondary);
+  }
 
-  @media (prefers-reduced-motion: no-preference){
-    .price{ transition: opacity 0.2s ease; }
+  /* ============================================================
+     Layout
+     ============================================================ */
+  .layout{
+    display:grid;
+    gap:var(--space-4);
+    grid-template-columns:1fr;
+    grid-template-areas: "result" "inputs";
+  }
+  @media (min-width: 900px){
+    .layout{
+      gap:var(--space-6);
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      grid-template-areas: "inputs result";
+      align-items:start;
+    }
+    .result{ position:sticky; top:var(--space-6); }
+  }
+  .inputs{ grid-area:inputs; }
+  .result{ grid-area:result; }
+
+  .card{
+    background:var(--bg-card);
+    border-radius:var(--radius-xl);
+    box-shadow:var(--shadow-card);
+    padding:var(--space-5);
+  }
+  @media (min-width: 768px){ .card{ padding:var(--space-6); } }
+
+  .section-title{
+    font-size:var(--text-footnote);
+    font-weight:600;
+    color:var(--label-secondary);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    margin:0 0 var(--space-4);
+  }
+
+  /* ============================================================
+     Inputs
+     ============================================================ */
+  .field{ margin:0 0 var(--space-5); border:0; padding:0; min-width:0; }
+  .field-label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:var(--text-subhead);
+    font-weight:600;
+    margin:0 0 var(--space-2);
+    padding:0;
+  }
+  .field-label output{
+    font-weight:400;
+    color:var(--label-secondary);
+  }
+
+  /* Slider: 44px tall hit area, 4px track, 28px thumb */
+  input[type="range"]{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:44px; margin:0;
+    background:transparent; cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track{
+    height:4px; border-radius:var(--radius-full);
+    background:linear-gradient(to right, var(--accent) 0 var(--fill, 50%), var(--bg-fill-strong) var(--fill, 50%) 100%);
+  }
+  input[type="range"]::-moz-range-track{
+    height:4px; border-radius:var(--radius-full); background:var(--bg-fill-strong);
+  }
+  input[type="range"]::-moz-range-progress{
+    height:4px; border-radius:var(--radius-full); background:var(--accent);
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:28px; height:28px; margin-top:-12px; border-radius:50%;
+    background:#FFFFFF; border:0;
+    box-shadow:0 0.5px 4px rgba(0,0,0,0.12), 0 6px 13px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.04);
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:28px; height:28px; border-radius:50%; background:#FFFFFF; border:0;
+    box-shadow:0 0.5px 4px rgba(0,0,0,0.12), 0 6px 13px rgba(0,0,0,0.12);
+  }
+  input[type="range"]:focus{ outline:none; }
+  input[type="range"]:focus-visible::-webkit-slider-thumb{ box-shadow:0 0 0 4px var(--focus-ring), 0 6px 13px rgba(0,0,0,0.12); }
+  input[type="range"]:focus-visible::-moz-range-thumb{ box-shadow:0 0 0 4px var(--focus-ring); }
+  .range-ends{
+    display:flex; justify-content:space-between;
+    font-size:var(--text-caption1); color:var(--label-secondary);
+    margin-top:-4px;
+  }
+
+  /* Steppers */
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3); }
+  .stepper{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--bg-fill);
+    border-radius:var(--radius-md);
+    padding:0;
+    min-height:44px;
+  }
+  .stepper button{
+    width:44px; height:44px; flex:none;
+    border:0; border-radius:var(--radius-md);
+    background:transparent;
+    color:var(--accent);
+    font:inherit; font-size:22px; line-height:1; font-weight:400;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform var(--duration-instant) var(--ease-out), background-color var(--duration-fast) var(--ease-default);
+  }
+  .stepper button:hover:not(:disabled){ background:var(--accent-soft); }
+  .stepper button:active:not(:disabled){ transform:scale(0.94); }
+  .stepper button:disabled{ color:var(--label-tertiary); cursor:default; opacity:0.5; }
+  .stepper button:focus{ outline:none; }
+  .stepper button:focus-visible{ box-shadow:0 0 0 4px var(--focus-ring); }
+  .stepper .value{
+    font-size:var(--text-body); font-weight:600; min-width:2ch; text-align:center;
+  }
+
+  /* Select */
+  .select-wrap{ position:relative; }
+  select{
+    -webkit-appearance:none; appearance:none;
+    width:100%; min-height:44px;
+    font:inherit; font-size:var(--text-body);
+    color:var(--label-primary);
+    background:var(--bg-fill);
+    border:0; border-radius:var(--radius-md);
+    padding:var(--space-2) var(--space-10) var(--space-2) var(--space-3);
+    cursor:pointer;
+  }
+  select:focus{ outline:none; }
+  select:focus-visible{ box-shadow:0 0 0 4px var(--focus-ring); }
+  .select-wrap svg{
+    position:absolute; right:var(--space-3); top:50%; transform:translateY(-50%);
+    width:12px; height:12px; pointer-events:none; color:var(--label-secondary);
+  }
+
+  /* Segmented control (radio group) */
+  .segmented{
+    display:grid; grid-auto-flow:column; grid-auto-columns:1fr;
+    background:var(--bg-fill);
+    border-radius:var(--radius-md);
+    padding:2px; gap:2px;
+  }
+  .segmented input{ position:absolute; opacity:0; width:1px; height:1px; pointer-events:none; }
+  .segmented label{
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    min-height:40px;              /* + 2px track padding each side = 44px target */
+    padding:var(--space-1) var(--space-1);
+    border-radius:10px;           /* concentric: 10 + 2 padding = 12 outer */
+    font-size:var(--text-footnote); font-weight:500; line-height:1.2;
+    color:var(--label-primary);
+    cursor:pointer;
+    transition:background-color var(--duration-fast) var(--ease-default);
+  }
+  .segmented input:checked + label{
+    background:var(--segment-selected);
+    box-shadow:var(--shadow-segment);
+    font-weight:600;
+  }
+  .segmented input:focus-visible + label{ box-shadow:0 0 0 3px var(--focus-ring); }
+
+  .note{
+    margin:0;
+    padding-top:var(--space-4);
+    border-top:0.5px solid var(--separator);
+    font-size:var(--text-footnote);
+    color:var(--label-secondary);
+    line-height:1.45;
+  }
+
+  /* ============================================================
+     Result (hero)
+     ============================================================ */
+  .result .card{ padding:var(--space-6); }
+  .price-label{
+    font-size:var(--text-subhead); font-weight:600; color:var(--label-secondary);
+    margin:0 0 var(--space-1);
+  }
+  .price{
+    font-family:var(--font-display);
+    font-size:44px; line-height:1.05; font-weight:700; letter-spacing:-0.02em;
+    margin:0;
+    display:flex; align-items:baseline; gap:var(--space-2); flex-wrap:wrap;
+  }
+  @media (min-width: 768px){ .price{ font-size:56px; } }
+  .price .ccy{ font-size:var(--text-title3); font-weight:600; color:var(--label-secondary); letter-spacing:0; }
+  .error-line{
+    margin:var(--space-3) 0 0;
+    font-size:var(--text-subhead);
+    color:var(--label-primary);
+  }
+  .error-line span{ color:var(--label-secondary); }
+  .psqm{ margin:var(--space-1) 0 0; font-size:var(--text-subhead); color:var(--label-secondary); }
+
+  .badges{ display:flex; flex-wrap:wrap; gap:var(--space-2); margin:var(--space-5) 0 0; padding:0; list-style:none; }
+  .badge{
+    font-size:var(--text-footnote); font-weight:600;
+    color:var(--accent-text); background:var(--accent-soft);
+    border-radius:var(--radius-full);
+    padding:6px var(--space-3);
+  }
+
+  .drivers{ margin-top:var(--space-6); padding-top:var(--space-5); border-top:0.5px solid var(--separator); }
+  .drivers h3{ font-size:var(--text-subhead); font-weight:600; margin:0 0 var(--space-3); }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:var(--space-2); margin:0; padding:0; list-style:none; }
+  .chip{
+    font-size:var(--text-footnote); font-weight:500;
+    border-radius:var(--radius-full);
+    padding:6px var(--space-3);
+    background:var(--bg-fill); color:var(--label-primary);
+  }
+  .chip.pos{ background:var(--positive-soft); color:var(--positive); }
+  .chip.neg{ background:var(--negative-soft); color:var(--negative); }
+  .chip.ns{ background:var(--bg-fill); color:var(--label-secondary); }
+  .chip .tag{ font-weight:400; opacity:0.9; }
+  .chip-empty{ font-size:var(--text-footnote); color:var(--label-secondary); }
+  .legend{ margin:var(--space-3) 0 0; font-size:var(--text-caption1); color:var(--label-secondary); }
+
+  .formula{
+    margin:var(--space-5) 0 0;
+    padding:var(--space-3) var(--space-4);
+    background:var(--bg-fill);
+    border-radius:var(--radius-md);
+    font-family:var(--font-mono);
+    font-size:var(--text-caption1);
+    line-height:1.55;
+    color:var(--label-secondary);
+    overflow-wrap:anywhere;
+  }
+
+  /* ============================================================
+     Methodology
+     ============================================================ */
+  .methodology{ margin:var(--space-12) 0 0; }
+  .methodology > h2{
+    font-family:var(--font-display);
+    font-size:var(--text-title1); font-weight:700; letter-spacing:-0.01em;
+    margin:0 0 var(--space-4);
+  }
+  .m-grid{ display:grid; gap:var(--space-4); grid-template-columns:1fr; }
+  @media (min-width: 900px){ .m-grid{ grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--space-6); } }
+  .m-card h3{
+    font-size:var(--text-footnote); font-weight:600; text-transform:uppercase; letter-spacing:0.04em;
+    color:var(--label-secondary); margin:0 0 var(--space-2);
+  }
+  .m-card .figure{
+    font-family:var(--font-display);
+    font-size:var(--text-title1); font-weight:700; letter-spacing:-0.01em; line-height:1.15;
+    margin:0;
+  }
+  .m-card .figure-caption{ font-size:var(--text-footnote); color:var(--label-secondary); margin:var(--space-1) 0 var(--space-4); }
+  .m-card p{ font-size:var(--text-subhead); line-height:1.47; color:var(--label-primary); margin:0 0 var(--space-3); }
+  .m-card p:last-child{ margin-bottom:0; }
+
+  /* ============================================================
+     Footer
+     ============================================================ */
+  footer{
+    margin:var(--space-12) 0 0;
+    padding:var(--space-6) 0 calc(var(--space-12) + env(safe-area-inset-bottom));
+    border-top:0.5px solid var(--separator);
+    font-size:var(--text-footnote);
+    color:var(--label-secondary);
+    line-height:1.5;
+  }
+  footer p{ margin:0 0 var(--space-3); max-width:720px; }
+  footer p:last-child{ margin-bottom:0; }
+  footer strong{ color:var(--label-primary); font-weight:600; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
   }
 </style>
 </head>
 <body>
 
-  <div class="topbar">
-    <div class="brand"><span class="dot"></span> ALMOUJ PRICING MODEL</div>
-    <div class="meta">Muscat, Oman &nbsp;·&nbsp; The Wave community<br>Hedonic MLR, n = 50</div>
-  </div>
+<div class="wrap">
 
-  <div class="hero-head">
-    <span class="eyebrow">Independent research · not affiliated with any developer or agency</span>
-    <h1>What's an apartment<br>in <em>The Wave</em> actually worth?</h1>
-    <p class="hero-sub">A hedonic pricing model built on 50 verified Almouj listings, validated against
-    10 held-out properties. Adjust the specifications below — the estimate updates from a
-    multiple linear regression fit on log-transformed price.</p>
-  </div>
+  <header>
+    <span class="eyebrow">Almouj Pricing Model · Independent research</span>
+    <h1>What's an apartment in The Wave actually worth?</h1>
+    <p class="lede">A hedonic pricing model built on 50 public Almouj listings: 40 for training, 10 held out (R² 0.90). Then tested on 10 new listings from OpenSooq (MAE 10,902 OMR). Adjust the specifications and the estimate updates from a multiple linear regression fit on log-transformed price.</p>
+    <p class="meta-line">Muscat, Oman · Hedonic MLR, n = 50 · Not affiliated with any developer or agency</p>
+  </header>
 
-  <div class="grid">
-    <!-- FORM -->
-    <div class="form-panel">
-      <span class="panel-label">Property specification</span>
+  <main class="layout">
 
-      <div class="field">
-        <label>Surface area <span class="val mono" id="sqmVal">140 m²</span></label>
-        <input type="range" id="sqm" min="76" max="245" value="140" step="1">
-      </div>
+    <!-- ============ INPUTS ============ -->
+    <section class="inputs" aria-labelledby="inputs-title">
+      <div class="card">
+        <h2 class="section-title" id="inputs-title">Property specification</h2>
 
-      <div class="row2">
         <div class="field">
-          <label>Bedrooms</label>
-          <div class="stepper">
-            <button type="button" data-step="bed" data-dir="-1">−</button>
-            <span class="n mono" id="bedVal">2</span>
-            <button type="button" data-step="bed" data-dir="1">+</button>
+          <label class="field-label" for="sqm">Surface area <output for="sqm" id="sqmVal" class="num">140 m²</output></label>
+          <input type="range" id="sqm" min="76" max="245" value="140" step="1" aria-valuetext="140 square metres">
+          <div class="range-ends num" aria-hidden="true"><span>76 m²</span><span>245 m²</span></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field" role="group" aria-labelledby="bed-label">
+            <p class="field-label" id="bed-label">Bedrooms</p>
+            <div class="stepper">
+              <button type="button" data-step="bed" data-dir="-1" aria-label="Fewer bedrooms">−</button>
+              <span class="value num" id="bedVal" aria-live="polite">2</span>
+              <button type="button" data-step="bed" data-dir="1" aria-label="More bedrooms">+</button>
+            </div>
+          </div>
+          <div class="field" role="group" aria-labelledby="bath-label">
+            <p class="field-label" id="bath-label">Bathrooms</p>
+            <div class="stepper">
+              <button type="button" data-step="bath" data-dir="-1" aria-label="Fewer bathrooms">−</button>
+              <span class="value num" id="bathVal" aria-live="polite">2</span>
+              <button type="button" data-step="bath" data-dir="1" aria-label="More bathrooms">+</button>
+            </div>
           </div>
         </div>
-        <div class="field">
-          <label>Bathrooms</label>
-          <div class="stepper">
-            <button type="button" data-step="bath" data-dir="-1">−</button>
-            <span class="n mono" id="bathVal">2</span>
-            <button type="button" data-step="bath" data-dir="1">+</button>
+
+        <div class="grid-2">
+          <div class="field" role="group" aria-labelledby="bal-label">
+            <p class="field-label" id="bal-label">Balconies</p>
+            <div class="stepper">
+              <button type="button" data-step="bal" data-dir="-1" aria-label="Fewer balconies">−</button>
+              <span class="value num" id="balVal" aria-live="polite">1</span>
+              <button type="button" data-step="bal" data-dir="1" aria-label="More balconies">+</button>
+            </div>
+          </div>
+          <div class="field" role="group" aria-labelledby="floor-label">
+            <p class="field-label" id="floor-label">Floor</p>
+            <div class="stepper">
+              <button type="button" data-step="floor" data-dir="-1" aria-label="Lower floor">−</button>
+              <span class="value num" id="floorVal" aria-live="polite">3</span>
+              <button type="button" data-step="floor" data-dir="1" aria-label="Higher floor">+</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="row2">
         <div class="field">
-          <label>Balconies</label>
-          <div class="stepper">
-            <button type="button" data-step="bal" data-dir="-1">−</button>
-            <span class="n mono" id="balVal">1</span>
-            <button type="button" data-step="bal" data-dir="1">+</button>
+          <label class="field-label" for="location">Location</label>
+          <div class="select-wrap">
+            <select id="location">
+              <option value="Almeria North">Almeria North</option>
+              <option value="Almeria South">Almeria South</option>
+              <option value="Juman 1">Juman 1</option>
+              <option value="Lagoon Residence">Lagoon Residence</option>
+              <option value="Marsa 1">Marsa 1</option>
+              <option value="Marsa 2">Marsa 2</option>
+              <option value="Marsa 3" selected>Marsa 3</option>
+              <option value="Marsa Gardens">Marsa Gardens</option>
+              <option value="Siraj">Siraj</option>
+              <option value="The Gardens">The Gardens</option>
+            </select>
+            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
         </div>
-        <div class="field">
-          <label>Floor number</label>
-          <div class="stepper">
-            <button type="button" data-step="floor" data-dir="-1">−</button>
-            <span class="n mono" id="floorVal">3</span>
-            <button type="button" data-step="floor" data-dir="1">+</button>
+
+        <fieldset class="field">
+          <legend class="field-label">View</legend>
+          <div class="segmented">
+            <input type="radio" name="view" id="view-other" value="Other"><label for="view-other">Other</label>
+            <input type="radio" name="view" id="view-lagoon" value="Lagoon"><label for="view-lagoon">Lagoon</label>
+            <input type="radio" name="view" id="view-marina" value="Marina" checked><label for="view-marina">Marina</label>
+            <input type="radio" name="view" id="view-sea" value="Sea"><label for="view-sea">Sea</label>
           </div>
-        </div>
-      </div>
+        </fieldset>
 
-      <div class="field">
-        <label>Location</label>
-        <select id="location">
-          <option value="Almeria North">Almeria North</option>
-          <option value="Almeria South">Almeria South</option>
-          <option value="Juman 1">Juman 1</option>
-          <option value="Lagoon Residence">Lagoon Residence</option>
-          <option value="Marsa 1">Marsa 1</option>
-          <option value="Marsa 2">Marsa 2</option>
-          <option value="Marsa 3" selected>Marsa 3</option>
-          <option value="Marsa Gardens">Marsa Gardens</option>
-          <option value="Siraj">Siraj</option>
-          <option value="The Gardens">The Gardens</option>
-        </select>
-      </div>
+        <fieldset class="field">
+          <legend class="field-label">Furnishing</legend>
+          <div class="segmented">
+            <input type="radio" name="furnish" id="furn-full" value="Furnished"><label for="furn-full">Furnished</label>
+            <input type="radio" name="furnish" id="furn-semi" value="Semi-furnished"><label for="furn-semi">Semi-furnished</label>
+            <input type="radio" name="furnish" id="furn-none" value="Unfurnished" checked><label for="furn-none">Unfurnished</label>
+          </div>
+        </fieldset>
 
-      <div class="row2">
-        <div class="field">
-          <label>View</label>
-          <select id="view">
-            <option value="Other">Other</option>
-            <option value="Lagoon">Lagoon</option>
-            <option value="Marina" selected>Marina</option>
-            <option value="Sea">Sea</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Furnishing</label>
-          <select id="furnish">
-            <option value="Furnished">Furnished</option>
-            <option value="Semi-furnished">Semi-furnished</option>
-            <option value="Unfurnished" selected>Unfurnished</option>
-          </select>
-        </div>
+        <p class="note">Model trained on Wave Homes and Dubizzle listings, September 2025. Only bedrooms, marina view and sea view were significant (p &lt; 0.05). Surface area is strongly correlated with price but overlaps with bedrooms, so its separate effect isn't significant. The other inputs are included for completeness.</p>
       </div>
+    </section>
 
-      <div class="note">
-        Model trained on data from Wave Homes and Dubizzle listings, September 2025.
-        Floor number, balconies, and exact sub-location were not statistically significant
-        predictors in the fitted model (p &gt; 0.05) — they're included here for completeness,
-        not because the model weighs them heavily.
-      </div>
-    </div>
+    <!-- ============ RESULT ============ -->
+    <section class="result" aria-labelledby="result-title">
+      <div class="card">
+        <h2 class="section-title" id="result-title">Estimated valuation</h2>
+        <p class="price-label">Predicted asking price</p>
+        <p class="price num" aria-live="polite" aria-atomic="true"><span id="priceOut">—</span><span class="ccy">OMR</span></p>
+        <p class="error-line">Typical error ± 10,902 OMR <span>(mean absolute error on unseen listings)</span></p>
+        <p class="psqm num" id="psqmOut">— OMR / m²</p>
 
-    <!-- VALUATION -->
-    <div class="val-panel">
-      <div>
-        <div class="seal">
-          <span class="r2 mono">.90</span>
-          <span class="r2label">R² TEST</span>
-        </div>
-        <span class="panel-label">Estimated valuation</span>
-        <div class="price-block">
-          <div class="price-caption">Predicted price</div>
-          <div class="price"><span id="priceOut">—</span><span class="ccy">OMR</span></div>
-          <div class="range" id="rangeOut">± 15,800 OMR estimated error</div>
-          <div class="psqm" id="psqmOut">— OMR / m²</div>
-        </div>
+        <ul class="badges" aria-label="Model performance">
+          <li class="badge">R² 0.90 held-out</li>
+          <li class="badge">MAE 10,902 OMR</li>
+        </ul>
 
         <div class="drivers">
-          <span class="panel-label">What's driving this number</span>
-          <div class="chip-row" id="chips"></div>
+          <h3>What's driving this number</h3>
+          <ul class="chip-row" id="chips"></ul>
+          <p class="legend">Effects relative to Almeria North, other view, furnished. Grey chips are not statistically significant.</p>
         </div>
-      </div>
 
-      <div class="val-footer">
-        Prediction = exp(11.2307 + 0.0012·sqm + 0.2110·bed + 0.0320·bath − 0.0377·balcony
-        + 0.0125·floor + location + view + furnishing). Coefficients fit by OLS on
-        log-transformed price, n = 40 training rows, tested on 10 held-out listings.
+        <p class="formula">Prediction = exp(11.2307 + 0.0012·sqm + 0.2110·bed + 0.0320·bath − 0.0377·balcony + 0.0125·floor + location + view + furnishing). OLS on log price, 40 training rows.</p>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="methodology">
-    <div class="m-card">
-      <span class="eyebrow">Sample</span>
-      <h3>50 verified listings</h3>
-      <p>Sourced from Wave Homes and Dubizzle in September 2025. Prices ranged 90,000–300,000
-      OMR with a right-skewed distribution, corrected with a log transform before fitting.</p>
-      <span class="stat">Mean price/m²: 1,175.8 OMR</span>
+  </main>
+
+  <!-- ============ METHODOLOGY ============ -->
+  <section class="methodology" aria-labelledby="method-title">
+    <h2 id="method-title">How the model works</h2>
+    <div class="m-grid">
+
+      <article class="card m-card">
+        <h3>Sample</h3>
+        <p class="figure num">50 public listings</p>
+        <p class="figure-caption">Wave Homes and Dubizzle, September 2025</p>
+        <p>Asking prices ranged 90,000–300,000 OMR (mean 165,410 OMR), with a right-skewed distribution corrected by a log transform before fitting.</p>
+        <p>Mean price per m²: 1,175.8 OMR.</p>
+      </article>
+
+      <article class="card m-card">
+        <h3>Model</h3>
+        <p class="figure num">F = 35.29</p>
+        <p class="figure-caption">Multiple linear regression, p &lt; 0.001</p>
+        <p>Strongest correlations with log price: marina view (r = 0.83), bedrooms (r = 0.80) and surface area (r = 0.79).</p>
+        <p>Parking spaces were dropped to reduce multicollinearity. Surface area and bedrooms had VIF above 100 before feature selection.</p>
+      </article>
+
+      <article class="card m-card">
+        <h3>Validation</h3>
+        <p class="figure num">MAE 10,902 OMR</p>
+        <p class="figure-caption">On 10 new listings from OpenSooq</p>
+        <p>50 listings: 40 for training, 10 held out (R² 0.90). Then tested on 10 new listings from OpenSooq, unseen during training.</p>
+        <p>MLR (MAE 10,902 OMR, RMSE 14,445 OMR) generalized better than a principal component regression alternative (MAE 15,831 OMR), so the calculator uses MLR.</p>
+      </article>
+
     </div>
-    <div class="m-card">
-      <span class="eyebrow">Model</span>
-      <h3>Multiple linear regression</h3>
-      <p>Parking spaces were dropped for severe multicollinearity (VIF &gt; 100). Marina view
-      and surface area were the strongest correlates of price (r = 0.83 and r = 0.79).</p>
-      <span class="stat">F-statistic 35.29, p &lt; 0.001</span>
-    </div>
-    <div class="m-card">
-      <span class="eyebrow">Validation</span>
-      <h3>Tested out-of-sample</h3>
-      <p>A separate 10-apartment set, unseen during training, was used to test real-world
-      accuracy. MLR generalized better here than a principal component regression alternative.</p>
-      <span class="stat">Mean absolute error: 10,902 OMR</span>
-    </div>
-  </div>
+  </section>
 
   <footer>
-    <p><span class="fmark">△</span> This tool estimates asking-price levels from a small (n=50) sample of
-    one community and should not be treated as a formal appraisal — see the accompanying IA for full
-    limitations, including source bias toward asking (not sale) prices and reduced accuracy at the
-    extremes of the size range. Built with Python (pandas, statsmodels, scikit-learn) and deployed
-    as a static client-side calculator.</p>
+    <p>This tool estimates asking-price levels from a small sample (n = 50) of one community and is not a formal appraisal. Limitations include source bias toward asking rather than sale prices, and reduced accuracy at the extremes of the size range.</p>
+    <p>Methodology reviewed by Prof. Abraham Varghese, PhD (University of Technology and Applied Sciences, Muscat).</p>
+    <p>Built with Python (pandas, statsmodels, scikit-learn) and deployed as a static client-side calculator. <strong>Built by Umar Demir.</strong></p>
   </footer>
+
+</div>
 
 <script>
   // ---- Coefficients (Appendix B.2, final MLR model) ----
@@ -454,34 +616,35 @@
     view: { "Other": 0, "Lagoon": 0.1489, "Marina": 0.3753, "Sea": 0.1238 },
     furnish: { "Furnished": 0, "Semi-furnished": -0.1363, "Unfurnished": -0.0429 }
   };
-  const RMSE_OMR = 15800; // Table 7, final feature set, MLR
+
+  // Significant at p < 0.05 in the fitted model (Appendix B.2)
+  const SIGNIFICANT_VIEWS = new Set(["Marina", "Sea"]);
 
   const state = { sqm: 140, bed: 2, bath: 2, bal: 1, floor: 3 };
-  const bounds = {
-    bed: [1, 3], bath: [1, 3], bal: [0, 4], floor: [0, 5]
-  };
+  const bounds = { bed: [1, 3], bath: [1, 3], bal: [0, 4], floor: [0, 5] };
 
   const $ = id => document.getElementById(id);
+  const radioValue = name => document.querySelector(`input[name="${name}"]:checked`).value;
 
   function pctEffect(beta){ return (Math.exp(beta) - 1) * 100; }
 
   function computeChips(loc, view, furn){
     const items = [];
-    const push = (label, beta) => {
+    const push = (label, beta, significant) => {
       if (Math.abs(beta) < 0.0001) return;
       const pct = pctEffect(beta);
-      items.push({ label: `${label} ${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`, positive: pct >= 0 });
+      items.push({ label: `${label} ${pct >= 0 ? '+' : '−'}${Math.abs(pct).toFixed(1)}%`, positive: pct >= 0, significant });
     };
-    push(`View: ${view}`, COEF.view[view]);
-    push(`${loc}`, COEF.location[loc]);
-    push(`${furn}`, COEF.furnish[furn]);
+    push(`${view} view`, COEF.view[view], SIGNIFICANT_VIEWS.has(view));
+    push(loc, COEF.location[loc], false);
+    push(furn, COEF.furnish[furn], false);
     return items;
   }
 
   function render(){
     const loc = $("location").value;
-    const view = $("view").value;
-    const furn = $("furnish").value;
+    const view = radioValue("view");
+    const furn = radioValue("furnish");
 
     const lnPrice = COEF.const
       + COEF.sqm * state.sqm
@@ -495,27 +658,45 @@
 
     const price = Math.exp(lnPrice);
     const priceRounded = Math.round(price / 100) * 100;
-    const low = Math.round((price - RMSE_OMR) / 100) * 100;
-    const high = Math.round((price + RMSE_OMR) / 100) * 100;
     const psqm = Math.round(price / state.sqm);
 
     $("priceOut").textContent = priceRounded.toLocaleString("en-US");
-    $("rangeOut").textContent = `${low.toLocaleString("en-US")} – ${high.toLocaleString("en-US")} OMR likely range`;
     $("psqmOut").textContent = `${psqm.toLocaleString("en-US")} OMR / m²`;
 
+    const slider = $("sqm");
     $("sqmVal").textContent = `${state.sqm} m²`;
-    $("bedVal").textContent = state.bed;
-    $("bathVal").textContent = state.bath;
-    $("balVal").textContent = state.bal;
-    $("floorVal").textContent = state.floor;
+    slider.setAttribute("aria-valuetext", `${state.sqm} square metres`);
+    const fill = ((state.sqm - slider.min) / (slider.max - slider.min)) * 100;
+    slider.style.setProperty("--fill", `${fill}%`);
+
+    for (const key of Object.keys(bounds)){
+      $(`${key}Val`).textContent = state[key];
+      const [min, max] = bounds[key];
+      document.querySelector(`[data-step="${key}"][data-dir="-1"]`).disabled = state[key] <= min;
+      document.querySelector(`[data-step="${key}"][data-dir="1"]`).disabled = state[key] >= max;
+    }
 
     const chipRow = $("chips");
     chipRow.innerHTML = "";
-    computeChips(loc, view, furn).forEach(c => {
-      const el = document.createElement("span");
-      el.className = "chip " + (c.positive ? "pos" : "neg");
-      el.textContent = c.label;
-      chipRow.appendChild(el);
+    const chips = computeChips(loc, view, furn);
+    if (!chips.length){
+      const li = document.createElement("li");
+      li.className = "chip-empty";
+      li.textContent = "Baseline combination: no adjustments from view, location or furnishing.";
+      chipRow.appendChild(li);
+    }
+    chips.forEach(c => {
+      const li = document.createElement("li");
+      li.className = "chip " + (c.significant ? (c.positive ? "pos" : "neg") : "ns");
+      li.textContent = c.label;
+      if (!c.significant){
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = " · n.s.";
+        tag.setAttribute("aria-label", ", not significant");
+        li.appendChild(tag);
+      }
+      chipRow.appendChild(li);
     });
   }
 
@@ -529,7 +710,8 @@
       render();
     });
   });
-  ["location","view","furnish"].forEach(id => $(id).addEventListener("change", render));
+  $("location").addEventListener("change", render);
+  document.querySelectorAll('input[name="view"], input[name="furnish"]').forEach(r => r.addEventListener("change", render));
 
   render();
 </script>
